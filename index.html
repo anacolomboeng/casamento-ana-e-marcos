@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fotos do Casamento</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background-color: #f7f7f7; display: flex; justify-content: center; padding: 20px; }
+    .card { background: white; width: 100%; max-width: 400px; padding: 24px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+    h1 { color: #333; margin-bottom: 8px; font-size: 22px; }
+    p { color: #666; margin-bottom: 20px; font-size: 14px; }
+    input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 16px; font-size: 16px; }
+    .file-input { margin-bottom: 16px; text-align: left; }
+    label { display: block; margin-bottom: 6px; font-size: 14px; color: #444; }
+    input[type="file"] { width: 100%; font-size: 14px; }
+    button { width: 100%; padding: 14px; background-color: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    button:disabled { background-color: #ccc; }
+    #status { margin-top: 16px; font-size: 14px; color: #2e7d32; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Compartilhe sua Foto 📸</h1>
+    <p>Deixe uma lembrança desse dia especial para nós!</p>
+
+    <input type="text" id="nome" placeholder="Seu nome">
+    
+    <div class="file-input">
+      <label for="foto">Escolha ou tire uma foto:</label>
+      <input type="file" id="foto" accept="image/*" capture="environment">
+    </div>
+
+    <input type="text" id="mensagem" placeholder="Escreva uma mensagem (opcional)">
+
+    <button id="btnEnviar" onclick="enviarFoto()">Enviar Foto</button>
+    <div id="status"></div>
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
+  <script>
+    // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDw1NdWK3J3b0BWnRITDqApbSHYhLeeMpg",
+  authDomain: "casamento-ana-e-marcos.firebaseapp.com",
+  projectId: "casamento-ana-e-marcos",
+  storageBucket: "casamento-ana-e-marcos.firebasestorage.app",
+  messagingSenderId: "881503467903",
+  appId: "1:881503467903:web:cba1d2f69adfb507f7024a"
+};
+
+// Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    async function enviarFoto() {
+      const nome = document.getElementById('nome').value.trim();
+      const mensagem = document.getElementById('mensagem').value.trim();
+      const fileInput = document.getElementById('foto');
+      const status = document.getElementById('status');
+      const btn = document.getElementById('btnEnviar');
+
+      if (!nome) {
+        alert("Por favor, digite seu nome.");
+        return;
+      }
+      if (fileInput.files.length === 0) {
+        alert("Por favor, selecione uma foto.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      btn.disabled = true;
+      status.innerText = "Enviando foto...";
+
+      try {
+        // 1. Upload da imagem para o Firebase Storage
+        const storageRef = storage.ref(fotos/${Date.now()}_${file.name});
+        const snapshot = await storageRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+
+        // 2. Salva as informações no Firestore
+        await db.collection('fotos').add({
+          nome: nome,
+          mensagem: mensagem,
+          url: downloadURL,
+          criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        status.innerText = "Foto enviada com sucesso! ❤️";
+        document.getElementById('nome').value = '';
+        document.getElementById('mensagem').value = '';
+        fileInput.value = '';
+      } catch (error) {
+        console.error(error);
+        status.innerText = "Erro ao enviar foto. Tente novamente.";
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
